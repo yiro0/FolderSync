@@ -1,0 +1,22 @@
+# Ignored files
+/shelf/
+/workspace.xml
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+*.user
+*.suo
+
+# Rider
+/projectSettingsUpdater.xml
+/contentModel.xml
+/.idea.FolderSync.iml
+/modules.xml
+/.idea/
+
+# Other
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
