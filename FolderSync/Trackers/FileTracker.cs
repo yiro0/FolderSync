@@ -2,18 +2,9 @@
 
 namespace FolderSync.Trackers;
 
-public class FileChanges
-{
-    public List<FileChange> NewFiles { get; set; } = new();
-    public List<FileChange> ModifiedFiles { get; set; } = new();
-    public List<FileChange> DeletedFiles { get; set; } = new();
-    public List<DirectoryChange> NewDirectories { get; set; } = new();
-    public List<DirectoryChange> DeletedDirectories { get; set; } = new();
-}
-
 public class FileTracker
 {
-    public FileChanges Compare(string sourcePath, string replicaPath)
+    public FileChanges CompareFiles(string sourcePath, string replicaPath)
     {
         var changes = new FileChanges();
         
@@ -47,6 +38,12 @@ public class FileTracker
             changes.DeletedFiles.Add(new FileChange { SourcePath = null, ReplicaPath = rep });
         }
         
+        return changes;
+    }
+
+    public DirectoryChanges CompareDirectories(string sourcePath, string replicaPath)
+    {
+        var changes = new DirectoryChanges();
         //Directories
         var sourceDirs = Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories)
             .Select(d => d.Substring(sourcePath.Length).TrimStart('\\', '/')).ToHashSet();
@@ -70,7 +67,7 @@ public class FileTracker
                 ReplicaPath = Path.Combine(replicaPath, relPath)
             });
         }
-        
+
         return changes;
     }
 }

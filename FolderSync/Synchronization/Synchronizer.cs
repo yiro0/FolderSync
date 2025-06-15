@@ -33,14 +33,15 @@ public class Synchronizer
     {
         _logger.Log("Starting synchronization...");
 
-        var changes = _fileTracker.Compare(_sourcePath, _replicaPath);
+        var fileChanges = _fileTracker.CompareFiles(_sourcePath, _replicaPath);
+        var dirChanges = _fileTracker.CompareDirectories(_sourcePath, _replicaPath);
 
-        foreach (var file in changes.NewFiles)
+        foreach (var file in fileChanges.NewFiles)
         {
             CopyFile(file);
         }
 
-        foreach (var file in changes.ModifiedFiles)
+        foreach (var file in fileChanges.ModifiedFiles)
         {
             if (_fileValidator.Validate(file.SourcePath, file.ReplicaPath))
                 CopyFile(file);
@@ -48,17 +49,17 @@ public class Synchronizer
                 _logger.Log($"Validation failed for: {file.SourcePath}");
         }
 
-        foreach (var file in changes.DeletedFiles)
+        foreach (var file in fileChanges.DeletedFiles)
         {
             DeleteFile(file);
         }
 
-        foreach (var dir in changes.NewDirectories)
+        foreach (var dir in dirChanges.NewDirectories)
         {
             CreateDirectory(dir);
         }
 
-        foreach (var dir in changes.DeletedDirectories)
+        foreach (var dir in dirChanges.DeletedDirectories)
         {
             DeleteDirectory(dir);
         }
