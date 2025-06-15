@@ -17,8 +17,8 @@ public class FileTracker
         //New and modified files
         foreach (var relpath in sourceSet)
         {
-            var src = Path.Combine(replicaPath, relpath);
-            var rep = Path.Combine(sourcePath, relpath);
+            var src = Path.Combine(sourcePath, relpath);
+            var rep = Path.Combine(replicaPath, relpath);
 
             if (!replicaSet.Contains(relpath))
             {

@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using FolderSync.Logging;
+using FolderSync.Synchronization;
+using FolderSync.Trackers;
+using FolderSync.Validators;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
         var argDict = ParseArgs(args);
 
@@ -38,6 +42,32 @@ class Program
         Directory.CreateDirectory(replicaPath);
         string logFilePath = argDict["log"];
         Logger logger = new Logger(logFilePath);
+
+        var fileTracker = new FileTracker();
+        var fileValidator = new FileValidator();
+
+        var synchronizer = new Synchronizer(sourcePath, replicaPath, fileTracker, fileValidator, logger);
+        Console.WriteLine("Press Ctrl+C to stop the program.");
+        var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            e.Cancel = true;
+            cts.Cancel();
+            Console.WriteLine("Stopping...");
+        };
+
+        while (!cts.Token.IsCancellationRequested)
+        {
+            synchronizer.Synchronize();
+            try
+            {
+                await Task.Delay(intervalSeconds * 1000, cts.Token);
+            }
+            catch (TaskCanceledException)
+            {
+                break;
+            }
+        }
     }
 
     static Dictionary<string, string> ParseArgs(string[] args)
