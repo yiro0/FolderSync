@@ -7,8 +7,8 @@ public class FileChanges
     public List<FileChange> NewFiles { get; set; } = new();
     public List<FileChange> ModifiedFiles { get; set; } = new();
     public List<FileChange> DeletedFiles { get; set; } = new();
-    public List<FileChange> NewDirectories { get; set; } = new();
-    public List<FileChange> DeletedDirectories { get; set; } = new();
+    public List<DirectoryChange> NewDirectories { get; set; } = new();
+    public List<DirectoryChange> DeletedDirectories { get; set; } = new();
 }
 
 public class FileTracker

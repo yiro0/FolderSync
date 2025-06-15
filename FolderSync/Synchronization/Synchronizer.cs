@@ -112,10 +112,17 @@ public class Synchronizer
 
     private void DeleteDirectory(DirectoryChange dir)
     {
-        if (Directory.Exists(dir.ReplicaPath))
+        try
         {
-            Directory.Delete(dir.ReplicaPath, true);
-            _logger.Log($"Deleted directory: {dir.ReplicaPath}");
+            if (Directory.Exists(dir.ReplicaPath))
+            {
+                Directory.Delete(dir.ReplicaPath, true);
+                _logger.Log($"Deleted directory: {dir.ReplicaPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Log($"Error deleting derectory {dir.ReplicaPath}: {ex.Message}");
         }
     }
 }
