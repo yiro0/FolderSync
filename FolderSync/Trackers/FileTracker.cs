@@ -14,7 +14,6 @@ public class FileTracker
         var sourceSet = new HashSet<string>(sourceFiles.Select(f => f.Substring(sourcePath.Length).TrimStart('\\', '/')));
         var replicaSet = new HashSet<string>(replicaFiles.Select(f => f.Substring(replicaPath.Length).TrimStart('\\', '/')));
 
-        //New and modified files
         foreach (var relpath in sourceSet)
         {
             var src = Path.Combine(sourcePath, relpath);
@@ -31,7 +30,6 @@ public class FileTracker
             }
         }
 
-        //Deleted files
         foreach (var relpath in replicaSet.Except(sourceSet))
         {
             var rep = Path.Combine(replicaPath, relpath);
@@ -44,7 +42,6 @@ public class FileTracker
     public DirectoryChanges CompareDirectories(string sourcePath, string replicaPath)
     {
         var changes = new DirectoryChanges();
-        //Directories
         var sourceDirs = Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories)
             .Select(d => d.Substring(sourcePath.Length).TrimStart('\\', '/')).ToHashSet();
         var replicaDirs = Directory.GetDirectories(replicaPath, "*", SearchOption.AllDirectories)
