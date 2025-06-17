@@ -29,63 +29,86 @@ public class Synchronizer
         _lastSyncTime = DateTime.MinValue;
     }
 
-    public void Synchronize()
+    private readonly HashSet<string> _failedValidations = new();
+
+public void Synchronize()
+{
+    _logger.Log("Starting synchronization...");
+
+    var fileChanges = _fileTracker.CompareFiles(_sourcePath, _replicaPath);
+    var dirChanges = _fileTracker.CompareDirectories(_sourcePath, _replicaPath);
+
+    foreach (var file in fileChanges.NewFiles)
     {
-        _logger.Log("Starting synchronization...");
-
-        var fileChanges = _fileTracker.CompareFiles(_sourcePath, _replicaPath);
-        var dirChanges = _fileTracker.CompareDirectories(_sourcePath, _replicaPath);
-
-        foreach (var file in fileChanges.NewFiles)
-        {
-            CopyFile(file);
-        }
-
-        foreach (var file in fileChanges.ModifiedFiles)
-        {
-            if (_fileValidator.Validate(file.SourcePath, file.ReplicaPath))
-                CopyFile(file);
-            else
-                _logger.Log($"Validation failed for: {file.SourcePath}");
-        }
-
-        foreach (var file in fileChanges.DeletedFiles)
-        {
-            DeleteFile(file);
-        }
-
-        foreach (var dir in dirChanges.NewDirectories)
-        {
-            CreateDirectory(dir);
-        }
-
-        foreach (var dir in dirChanges.DeletedDirectories)
-        {
-            DeleteDirectory(dir);
-        }
-
-        _lastSyncTime = DateTime.Now;
-        _logger.Log("Synchronization completed.");
+        CopyFile(file, "Copied file");
     }
 
-    private void CopyFile(FileChange file)
+    foreach (var file in fileChanges.ModifiedFiles)
     {
-        try
+        CopyFile(file, "Modified file");
+    }
+
+    foreach (var file in fileChanges.DeletedFiles)
+    {
+        DeleteFile(file);
+    }
+
+    foreach (var dir in dirChanges.NewDirectories)
+    {
+        CreateDirectory(dir);
+    }
+
+    foreach (var dir in dirChanges.DeletedDirectories)
+    {
+        DeleteDirectory(dir);
+    }
+    
+    foreach (var path in _failedValidations.ToList())
+    {
+        if (_fileValidator.Validate(path, GetReplicaPath(path)))
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(file.ReplicaPath));
-            File.Copy(file.SourcePath, file.ReplicaPath, true);
-            _logger.Log($"Copied file: {file.SourcePath} to {file.ReplicaPath}");
-            
-            if (!_fileValidator.Validate(file.SourcePath, file.ReplicaPath))
-            {
-                _logger.Log($"Validation failed after copy for: {file.SourcePath}");
-            }
+            _logger.Log($"Re-validation succeeded for: {path}");
+            _failedValidations.Remove(path);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.Log($"Error copying file {file.SourcePath}: {ex.Message}");
+            _logger.Log($"Re-validation failed for: {path}");
         }
     }
+
+    _lastSyncTime = DateTime.Now;
+    _logger.Log("Synchronization completed.");
+}
+
+private void CopyFile(FileChange file, string action)
+{
+    try
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(file.ReplicaPath));
+        File.Copy(file.SourcePath, file.ReplicaPath, true);
+        long bytes = new FileInfo(file.SourcePath).Length;
+        _logger.Log($"{action}: {file.SourcePath} to {file.ReplicaPath} ({bytes} bytes)");
+
+        if (!_fileValidator.Validate(file.SourcePath, file.ReplicaPath))
+        {
+            _logger.Log($"Validation failed after copy for: {file.SourcePath}");
+            _failedValidations.Add(file.SourcePath);
+        }
+        else
+        {
+            _failedValidations.Remove(file.SourcePath);
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.Log($"Error copying file {file.SourcePath}: {ex.Message}");
+    }
+}
+
+private string GetReplicaPath(string sourcePath)
+{
+    return sourcePath.Replace(_sourcePath, _replicaPath);
+}
 
     private void DeleteFile(FileChange file)
     {
