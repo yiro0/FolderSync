@@ -75,6 +75,11 @@ public class Synchronizer
             Directory.CreateDirectory(Path.GetDirectoryName(file.ReplicaPath));
             File.Copy(file.SourcePath, file.ReplicaPath, true);
             _logger.Log($"Copied file: {file.SourcePath} to {file.ReplicaPath}");
+            
+            if (!_fileValidator.Validate(file.SourcePath, file.ReplicaPath))
+            {
+                _logger.Log($"Validation failed after copy for: {file.SourcePath}");
+            }
         }
         catch (Exception ex)
         {

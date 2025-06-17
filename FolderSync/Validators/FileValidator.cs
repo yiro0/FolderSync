@@ -1,4 +1,6 @@
-﻿namespace FolderSync.Validators;
+﻿using FolderSync.Utils;
+
+namespace FolderSync.Validators;
 
 public class FileValidator
 {
@@ -6,11 +8,16 @@ public class FileValidator
     {
         if (!File.Exists(sourcePath) || !File.Exists(replicaPath))
             return false;
+        
         var srcInfo = new FileInfo(sourcePath);
         var repInfo = new FileInfo(replicaPath);
+        
+        if (srcInfo.Length != repInfo.Length)
+            return false;
+            
+        var srcHash = HashUtils.ComputeSHA256(sourcePath);
+        var repHash = HashUtils.ComputeSHA256(replicaPath);
 
-
-        return srcInfo.Length == repInfo.Length &&
-               File.GetLastWriteTimeUtc(sourcePath) == File.GetLastWriteTimeUtc(replicaPath);
+        return srcHash == repHash;
     }
 }
